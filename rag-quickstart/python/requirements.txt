@@ -1,0 +1,3 @@
+# Tessera RAG quickstart (Python) — runtime dependencies
+tessera==0.4.0
+requests>=2.31,<3

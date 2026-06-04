@@ -1,0 +1,19 @@
+[project]
+name = "tessera-rag-quickstart"
+version = "0.1.0"
+description = "Tessera RAG quickstart example (Python)"
+requires-python = ">=3.10"
+dependencies = [
+    "tessera==0.4.0",
+    "requests>=2.31,<3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8",
+    "requests-mock>=1.12",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"

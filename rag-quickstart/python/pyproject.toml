@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Tessera RAG quickstart example (Python)"
 requires-python = ">=3.10"
 dependencies = [
-    "tessera==0.4.0",
+    "tessera-vector==0.4.0",
     "requests>=2.31,<3",
 ]
 

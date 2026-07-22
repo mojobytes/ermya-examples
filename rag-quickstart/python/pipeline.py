@@ -3,7 +3,9 @@
 The Tessera client and embedding provider are injected so the whole flow is
 unit-testable without a live Tessera or real HTTP. When ``config.vls`` is set,
 the pipeline demonstrates Vector-Level Security: it ingests the fixed PDF
-catalog (``documents.DOCUMENTS``) with a per-document owner ACL, then runs the
+catalog (``documents.DOCUMENTS``) — using oxidize-pdf's RAG-oriented semantic
+chunking, so each vector carries heading and page provenance — with a
+per-document owner ACL, then runs the
 same query as Alice and as Bob using their real tokens, printing disjoint
 result sets. When ``config.vls`` is None, it falls back to the original
 vector-only ingest+search over the markdown files in ``data_dir`` so the
@@ -22,7 +24,7 @@ from config_loader import Config
 from dimension_check import verify_dimension
 from documents import DOCUMENTS
 from embedding import EmbeddingProvider
-from pdf_extractor import extract_text
+from pdf_extractor import extract_rag_chunks
 from tessera import Permission
 from vls import fetch_user_token, register_demo_principals
 
@@ -84,22 +86,29 @@ def _print_results(label: str, results) -> None:
     for result in results:
         metadata = result.metadata or {} if hasattr(result, "metadata") else {}
         jurisdiction = metadata.get("jurisdiction", "?")
+        heading = metadata.get("heading", "")
+        page = metadata.get("page", "?")
         text = metadata.get("text", "")
         print(
             f"  - id={getattr(result, 'id', '?')} "
             f"distance={getattr(result, 'distance', '?')} "
-            f"jurisdiction={jurisdiction}: {text[:60]}"
+            f"jurisdiction={jurisdiction} "
+            f"[{heading} — p.{page}]: {text[:60]}"
         )
 
 
 def _ingest_pdf(client, provider, config: Config, data_dir: Path, doc, extract, permissions):
-    """Extract, chunk, embed and insert one PDF document. Returns its first
-    vector (or None if it produced no chunks)."""
-    text = extract(str(Path(data_dir) / doc.filename))
-    chunks = chunk_text(text, config.ingestion.chunk_size, config.ingestion.chunk_overlap)
+    """Embed and insert one PDF document's RAG chunks. Returns its first
+    vector (or None if it produced no chunks).
+
+    ``extract`` yields semantic chunks (``PdfChunk``) from oxidize-pdf's
+    RAG-oriented chunking, so no character-based re-chunking happens here; each
+    chunk keeps its heading and page provenance in the vector metadata.
+    """
+    chunks = extract(str(Path(data_dir) / doc.filename))
     first: list[float] | None = None
     for i, chunk in enumerate(chunks):
-        vector = provider.embed(chunk)
+        vector = provider.embed(chunk.text)
         if first is None:
             verify_dimension(vector, config.embedding.dimension)
             first = vector
@@ -107,9 +116,11 @@ def _ingest_pdf(client, provider, config: Config, data_dir: Path, doc, extract, 
             tenant_id=config.ingestion.tenant_id,
             vector=vector,
             metadata={
-                "text": chunk,
+                "text": chunk.text,
                 "source": doc.filename,
                 "chunk": i,
+                "heading": chunk.heading,
+                "page": chunk.pages[0] if chunk.pages else -1,
                 "jurisdiction": doc.jurisdiction,
             },
             permissions=permissions,
@@ -153,7 +164,7 @@ def run_pipeline(
     provider: EmbeddingProvider,
     data_dir: Path,
     *,
-    extract=extract_text,
+    extract=extract_rag_chunks,
     fetch_token=fetch_user_token,
 ) -> None:
     """Run the full RAG quickstart with injected client + provider.

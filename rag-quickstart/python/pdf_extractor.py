@@ -2,10 +2,25 @@
 
 The reader is injectable so tests never open a real PDF. main() uses the real
 oxidize_pdf.PdfReader.open.
+
+``extract_rag_chunks`` uses oxidize-pdf's RAG-oriented chunking
+(``rag_chunks()``): semantic chunks that respect headings/sections, each
+carrying its heading context and page numbers, mapped into the example's own
+``PdfChunk`` so the pipeline never depends on the engine's native chunk type.
 """
 from __future__ import annotations
 
+from dataclasses import dataclass
 from pathlib import Path
+
+
+@dataclass(frozen=True)
+class PdfChunk:
+    """A RAG-ready chunk: text plus where it lives in the document."""
+
+    text: str
+    heading: str
+    pages: tuple[int, ...]
 
 
 class PdfExtractionError(Exception):
@@ -34,5 +49,28 @@ def extract_text(path: str | Path, *, reader=None) -> str:
             # oxidize-pdf returns one string per page; join into a single text.
             text = "\n".join(text)
         return text
+    except Exception as cause:  # noqa: BLE001 — wrap any engine error
+        raise PdfExtractionError(key, cause) from cause
+
+
+def extract_rag_chunks(path: str | Path, *, reader=None) -> list[PdfChunk]:
+    """RAG-oriented extraction: semantic chunks with heading + page context.
+
+    Delegates to oxidize-pdf's ``rag_chunks()`` (default configuration) and
+    maps each engine chunk into a ``PdfChunk``.
+    """
+    reader = reader or _default_reader
+    key = str(path)
+    try:
+        document = reader(key)
+        return [
+            PdfChunk(
+                text=chunk.text,
+                # chunks outside any heading carry heading_context = None
+                heading=chunk.heading_context or "",
+                pages=tuple(chunk.page_numbers),
+            )
+            for chunk in document.rag_chunks()
+        ]
     except Exception as cause:  # noqa: BLE001 — wrap any engine error
         raise PdfExtractionError(key, cause) from cause

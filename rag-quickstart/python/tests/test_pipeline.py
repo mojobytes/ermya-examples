@@ -115,7 +115,16 @@ def test_pipeline_no_documents_does_not_insert(client, provider, tmp_path):
 
 from config_loader import VlsConfig, VlsUser  # noqa: E402
 from documents import ALICE, BOB  # noqa: E402
+from pdf_extractor import PdfChunk  # noqa: E402
 import pipeline as pipeline_mod  # noqa: E402
+
+
+def _chunks(*texts):
+    """Build PdfChunk lists the way extract_rag_chunks would."""
+    return [
+        PdfChunk(text=t, heading=f"Section {i}", pages=(i,))
+        for i, t in enumerate(texts)
+    ]
 
 
 def _base_config(vls):
@@ -141,7 +150,7 @@ def test_vls_pipeline_inserts_each_doc_with_owner_acl():
     provider.embed.return_value = [0.1, 0.2, 0.3]
     client.search.return_value = []
 
-    fake_extract = MagicMock(return_value="Article 1 transparency ...")
+    fake_extract = MagicMock(return_value=_chunks("Article 1 transparency ..."))
     fake_fetch = MagicMock(side_effect=lambda vls, owner: f"jwt-{owner}")
 
     pipeline_mod.run_pipeline(
@@ -158,6 +167,28 @@ def test_vls_pipeline_inserts_each_doc_with_owner_acl():
     assert owners_seen == {ALICE, BOB}
 
 
+def test_vls_pipeline_inserts_rag_chunk_metadata():
+    """Each inserted chunk must carry its heading and page provenance."""
+    client = MagicMock()
+    client.register_principal.side_effect = ["pid-a", "pid-b"]
+    provider = MagicMock()
+    provider.embed.return_value = [0.1, 0.2, 0.3]
+    client.search.return_value = []
+
+    pipeline_mod.run_pipeline(
+        _base_config(_vls()), client, provider, Path("./data"),
+        extract=MagicMock(return_value=_chunks("intro text", "scope text")),
+        fetch_token=MagicMock(side_effect=lambda vls, owner: f"jwt-{owner}"),
+    )
+
+    assert client.insert.called
+    for call in client.insert.call_args_list:
+        metadata = call.kwargs["metadata"]
+        assert metadata["heading"].startswith("Section ")
+        assert isinstance(metadata["page"], int)
+        assert "text" in metadata and "source" in metadata and "jurisdiction" in metadata
+
+
 def test_vls_pipeline_searches_once_per_user_token():
     client = MagicMock()
     client.register_principal.side_effect = ["pid-a", "pid-b"]
@@ -166,7 +197,7 @@ def test_vls_pipeline_searches_once_per_user_token():
     client.search.return_value = []
     pipeline_mod.run_pipeline(
         _base_config(_vls()), client, provider, Path("./data"),
-        extract=MagicMock(return_value="text"),
+        extract=MagicMock(return_value=_chunks("text")),
         fetch_token=MagicMock(side_effect=lambda vls, owner: f"jwt-{owner}"),
     )
     user_tokens = {c.kwargs.get("user_token") for c in client.search.call_args_list}
@@ -214,7 +245,7 @@ def test_vls_pipeline_never_prints_user_token(capsys):
 
     pipeline_mod.run_pipeline(
         _base_config(_vls()), client, provider, Path("./data"),
-        extract=MagicMock(return_value="text"),
+        extract=MagicMock(return_value=_chunks("text")),
         fetch_token=fake_fetch,
     )
 

@@ -18,9 +18,13 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-PDF text extraction uses [`oxidize-pdf`](https://pypi.org/project/oxidize-pdf/)
+PDF extraction uses [`oxidize-pdf`](https://pypi.org/project/oxidize-pdf/)
 (pinned in `requirements.txt` / `pyproject.toml`), pulled in automatically by
-the commands above. It is only exercised by the VLS demo path.
+the commands above. The VLS demo path uses its RAG-oriented semantic chunking
+(`rag_chunks()`): chunks respect headings and sections, and each vector's
+metadata carries the chunk's heading and page number, so search results cite
+where in the document they come from. `chunk_size`/`chunk_overlap` from the
+config only apply to the standalone Markdown fallback.
 
 ## Configuration
 
@@ -113,7 +117,7 @@ a live Tessera server or network access.
 | `dimension_check.py`        | Verify vector length matches config dimension   |
 | `tessera_client_factory.py` | Build the Tessera SDK client from config        |
 | `documents.py`              | VLS demo PDF catalog + per-document owner ACL   |
-| `pdf_extractor.py`          | Extract text from PDFs via `oxidize-pdf`        |
+| `pdf_extractor.py`          | PDF extraction via `oxidize-pdf`: plain text + RAG semantic chunks (heading + page provenance) |
 | `vls.py`                    | VLS demo helpers: register principals, fetch tokens |
 | `pipeline.py`               | Orchestration (injected client + provider); standalone or VLS demo |
 | `main.py`                   | Entry point wiring the real implementations     |

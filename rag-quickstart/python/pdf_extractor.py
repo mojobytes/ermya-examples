@@ -29,6 +29,10 @@ def extract_text(path: str | Path, *, reader=None) -> str:
     key = str(path)
     try:
         document = reader(key)
-        return document.extract_text()
+        text = document.extract_text()
+        if isinstance(text, list):
+            # oxidize-pdf returns one string per page; join into a single text.
+            text = "\n".join(text)
+        return text
     except Exception as cause:  # noqa: BLE001 — wrap any engine error
         raise PdfExtractionError(key, cause) from cause

@@ -4,6 +4,7 @@ The Tessera client and embedding provider are injected, so the whole flow is
 exercised with mocks — no live Tessera, no real HTTP.
 """
 
+from pathlib import Path
 from unittest.mock import MagicMock
 
 import pytest
@@ -108,3 +109,83 @@ def test_pipeline_no_documents_does_not_insert(client, provider, tmp_path):
     run_pipeline(make_config(), client, provider, tmp_path)
     provider.embed.assert_not_called()
     client.insert.assert_not_called()
+
+
+# --- VLS pipeline tests (Task A5) ---
+
+from config_loader import VlsConfig, VlsUser  # noqa: E402
+from documents import ALICE, BOB  # noqa: E402
+import pipeline as pipeline_mod  # noqa: E402
+
+
+def _base_config(vls):
+    return Config(
+        tessera=TesseraConfig("h", 1, "", False),
+        embedding=EmbeddingConfig("ollama", "e", "", "m", "", 3),
+        ingestion=IngestionConfig("t1", 10, 0, "./data"),
+        vls=vls,
+    )
+
+
+def _vls():
+    return VlsConfig(
+        issuer="iss", token_endpoint="te", client_id="tessera-client",
+        users={ALICE: VlsUser("alice", "pw-a"), BOB: VlsUser("bob", "pw-b")},
+    )
+
+
+def test_vls_pipeline_inserts_each_doc_with_owner_acl():
+    client = MagicMock()
+    client.register_principal.side_effect = ["pid-a", "pid-b"]
+    provider = MagicMock()
+    provider.embed.return_value = [0.1, 0.2, 0.3]
+    client.search.return_value = []
+
+    fake_extract = MagicMock(return_value="Article 1 transparency ...")
+    fake_fetch = MagicMock(side_effect=lambda vls, owner: f"jwt-{owner}")
+
+    pipeline_mod.run_pipeline(
+        _base_config(_vls()), client, provider, Path("./data"),
+        extract=fake_extract, fetch_token=fake_fetch,
+    )
+
+    # Every insert carries a single-owner read permission
+    owners_seen = set()
+    for call in client.insert.call_args_list:
+        perms = call.kwargs["permissions"]
+        assert len(perms) == 1 and perms[0].action == "read"
+        owners_seen.add(perms[0].principal)
+    assert owners_seen == {ALICE, BOB}
+
+
+def test_vls_pipeline_searches_once_per_user_token():
+    client = MagicMock()
+    client.register_principal.side_effect = ["pid-a", "pid-b"]
+    provider = MagicMock()
+    provider.embed.return_value = [0.1, 0.2, 0.3]
+    client.search.return_value = []
+    pipeline_mod.run_pipeline(
+        _base_config(_vls()), client, provider, Path("./data"),
+        extract=MagicMock(return_value="text"),
+        fetch_token=MagicMock(side_effect=lambda vls, owner: f"jwt-{owner}"),
+    )
+    user_tokens = {c.kwargs.get("user_token") for c in client.search.call_args_list}
+    assert user_tokens == {"jwt-alice", "jwt-bob"}
+
+
+def test_fallback_without_vls_ingests_without_acls():
+    client = MagicMock()
+    provider = MagicMock()
+    provider.embed.return_value = [0.1, 0.2, 0.3]
+    client.search.return_value = []
+    pipeline_mod.run_pipeline(
+        _base_config(None), client, provider, Path("./data"),
+        extract=MagicMock(return_value="text"),
+        fetch_token=MagicMock(),
+    )
+    # no permissions passed, no per-user search
+    for call in client.insert.call_args_list:
+        assert not call.kwargs.get("permissions")
+    for call in client.search.call_args_list:
+        assert call.kwargs.get("user_token") is None
+    client.register_principal.assert_not_called()

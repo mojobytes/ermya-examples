@@ -2,3 +2,4 @@
 # Distribution name is `tessera-vector`; the import name is `tessera`.
 tessera-vector==0.4.0
 requests>=2.31,<3
+oxidize-pdf>=0.15.1

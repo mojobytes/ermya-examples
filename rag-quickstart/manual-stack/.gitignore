@@ -1,0 +1,6 @@
+# Generated artifacts carry per-run secrets (API key, postgres password,
+# Keycloak client secret). Regenerate them — see README.md — never commit.
+.env
+docker-compose.yml
+tessera_config.json
+keycloak/

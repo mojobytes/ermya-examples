@@ -34,3 +34,19 @@ def test_main_wires_config_client_provider_into_pipeline(monkeypatch, tmp_path):
 def _record(calls, name, return_value, *args):
     calls[name] = args
     return return_value
+
+
+def test_main_runs_pipeline_with_config(monkeypatch, tmp_path):
+    # main() must call run_pipeline exactly once with the loaded config;
+    # patch create_client/create_provider/run_pipeline so nothing real runs.
+    called = {}
+    monkeypatch.setattr(main_module, "create_client", lambda c: MagicMock())
+    monkeypatch.setattr(main_module, "create_provider", lambda c: MagicMock())
+    monkeypatch.setattr(
+        main_module,
+        "run_pipeline",
+        lambda *a, **k: called.setdefault("ran", True),
+    )
+    monkeypatch.chdir(tmp_path)  # no config -> defaults, vls None
+    main_module.main()
+    assert called["ran"] is True

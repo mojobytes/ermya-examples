@@ -79,3 +79,41 @@ def test_load_config_raises_on_unknown_schema_version(tmp_path):
     _write_config(tmp_path, bad)
     with pytest.raises(ValueError, match="schema_version"):
         load_config(start_dir=tmp_path)
+
+
+def test_load_config_reads_vls_block(tmp_path):
+    (tmp_path / "tessera_config.json").write_text(json.dumps({
+        "schema_version": 1,
+        "tessera": {"host": "h", "port": 1, "api_key": "", "secure": False},
+        "embedding": {"provider": "ollama", "endpoint": "e", "api_key": "",
+                      "model": "m", "deployment_name": "", "dimension": 3},
+        "ingestion": {"tenant_id": "t", "chunk_size": 1, "chunk_overlap": 0,
+                      "data_dir": "./data"},
+        "vls": {
+            "issuer": "http://kc/realms/tessera",
+            "token_endpoint": "http://kc/realms/tessera/protocol/openid-connect/token",
+            "client_id": "tessera-client",
+            "users": {
+                "alice": {"username": "alice", "password": "pw-a"},
+                "bob": {"username": "bob", "password": "pw-b"},
+            },
+        },
+    }))
+    from config_loader import load_config
+    cfg = load_config(tmp_path)
+    assert cfg.vls is not None
+    assert cfg.vls.client_id == "tessera-client"
+    assert cfg.vls.users["alice"].password == "pw-a"
+
+
+def test_load_config_without_vls_leaves_it_none(tmp_path):
+    (tmp_path / "tessera_config.json").write_text(json.dumps({
+        "schema_version": 1,
+        "tessera": {"host": "h", "port": 1, "api_key": "", "secure": False},
+        "embedding": {"provider": "ollama", "endpoint": "e", "api_key": "",
+                      "model": "m", "deployment_name": "", "dimension": 3},
+        "ingestion": {"tenant_id": "t", "chunk_size": 1, "chunk_overlap": 0,
+                      "data_dir": "./data"},
+    }))
+    from config_loader import load_config
+    assert load_config(tmp_path).vls is None

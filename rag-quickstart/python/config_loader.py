@@ -43,10 +43,25 @@ class IngestionConfig:
 
 
 @dataclass
+class VlsUser:
+    username: str
+    password: str
+
+
+@dataclass
+class VlsConfig:
+    issuer: str
+    token_endpoint: str
+    client_id: str
+    users: dict[str, VlsUser]
+
+
+@dataclass
 class Config:
     tessera: TesseraConfig
     embedding: EmbeddingConfig
     ingestion: IngestionConfig
+    vls: VlsConfig | None = None
 
 
 def _default_config() -> Config:
@@ -93,6 +108,18 @@ def _parse_config(data: dict) -> Config:
     t = data["tessera"]
     e = data["embedding"]
     i = data["ingestion"]
+    vls = None
+    vls_raw = data.get("vls")
+    if vls_raw is not None:
+        vls = VlsConfig(
+            issuer=vls_raw["issuer"],
+            token_endpoint=vls_raw["token_endpoint"],
+            client_id=vls_raw["client_id"],
+            users={
+                owner: VlsUser(username=u["username"], password=u["password"])
+                for owner, u in vls_raw["users"].items()
+            },
+        )
     return Config(
         tessera=TesseraConfig(
             host=t["host"],
@@ -114,6 +141,7 @@ def _parse_config(data: dict) -> Config:
             chunk_overlap=int(i["chunk_overlap"]),
             data_dir=i.get("data_dir", "./data"),
         ),
+        vls=vls,
     )
 
 

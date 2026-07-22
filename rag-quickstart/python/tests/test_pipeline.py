@@ -189,3 +189,42 @@ def test_fallback_without_vls_ingests_without_acls():
     for call in client.search.call_args_list:
         assert call.kwargs.get("user_token") is None
     client.register_principal.assert_not_called()
+
+
+def test_vls_pipeline_never_prints_user_token(capsys):
+    """Regression: ensure user tokens are never leaked to stdout.
+
+    Tokens are fetched per-user and passed to client.search, but must never
+    appear in any printed output. This test verifies the invariant by using
+    a recognizable sentinel token and asserting it does not appear in stdout.
+    """
+    SENTINEL_TOKEN = "SECRET-TOKEN-abc123xyz"
+
+    client = MagicMock()
+    client.register_principal.side_effect = ["pid-a", "pid-b"]
+    provider = MagicMock()
+    provider.embed.return_value = [0.1, 0.2, 0.3]
+    client.search.return_value = []
+
+    # fetch_token returns the sentinel for each user
+    def fake_fetch(vls, owner):
+        if owner == ALICE:
+            return SENTINEL_TOKEN
+        return f"{SENTINEL_TOKEN}-{owner}"
+
+    pipeline_mod.run_pipeline(
+        _base_config(_vls()), client, provider, Path("./data"),
+        extract=MagicMock(return_value="text"),
+        fetch_token=fake_fetch,
+    )
+
+    # Verify the sentinel was actually passed to client.search
+    user_tokens = {c.kwargs.get("user_token") for c in client.search.call_args_list}
+    assert SENTINEL_TOKEN in user_tokens, "Test setup error: sentinel not passed to search"
+
+    # Assert the token NEVER appears in stdout
+    out = capsys.readouterr().out
+    assert SENTINEL_TOKEN not in out, (
+        f"Security regression: sentinel token leaked to stdout. "
+        f"Output:\n{out}"
+    )

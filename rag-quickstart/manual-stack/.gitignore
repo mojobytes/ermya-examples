@@ -2,5 +2,5 @@
 # Keycloak client secret). Regenerate them — see README.md — never commit.
 .env
 docker-compose.yml
-tessera_config.json
+ermya_config.json
 keycloak/

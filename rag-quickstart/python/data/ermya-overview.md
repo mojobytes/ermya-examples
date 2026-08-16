@@ -1,9 +1,9 @@
-# Tessera Overview
+# Ermya Overview
 
-Tessera is a vector database for similarity search. It stores high-dimensional
+Ermya is a vector database for similarity search. It stores high-dimensional
 embedding vectors and retrieves the nearest neighbours of a query vector using
 an HNSW index. Each tenant is an isolated namespace with its own vector
-dimension, so different applications can share one Tessera instance without
+dimension, so different applications can share one Ermya instance without
 their data mixing.
 
 Vectors are inserted with optional metadata, which can be returned alongside

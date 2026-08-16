@@ -6,13 +6,13 @@ import { afterEach, beforeEach, describe, expect, it, jest } from "@jest/globals
 
 import type { Config } from "../src/config-loader.js";
 import type { EmbeddingProvider } from "../src/embedding.js";
-import type { TesseraClientLike } from "../src/tessera-client-factory.js";
+import type { ErmyaClientLike } from "../src/ermya-client-factory.js";
 import { runPipeline } from "../src/pipeline.js";
 
 function makeConfig(overrides: { dimension?: number; tenantId?: string; chunkSize?: number; chunkOverlap?: number } = {}): Config {
   const { dimension = 4, tenantId = "rag-quickstart", chunkSize = 10, chunkOverlap = 0 } = overrides;
   return {
-    tessera: { host: "localhost", port: 50051, apiKey: "k", secure: false },
+    ermya: { host: "localhost", port: 50051, apiKey: "k", secure: false },
     embedding: {
       provider: "ollama",
       endpoint: "http://localhost:11434",
@@ -26,12 +26,12 @@ function makeConfig(overrides: { dimension?: number; tenantId?: string; chunkSiz
 }
 
 function tempDataDir(content = "abcdefghijABCDEFGHIJ"): string {
-  const dir = mkdtempSync(join(tmpdir(), "tessera-pipe-"));
+  const dir = mkdtempSync(join(tmpdir(), "ermya-pipe-"));
   writeFileSync(join(dir, "doc.md"), content);
   return dir;
 }
 
-let client: jest.Mocked<TesseraClientLike>;
+let client: jest.Mocked<ErmyaClientLike>;
 let provider: jest.Mocked<EmbeddingProvider>;
 
 beforeEach(() => {
@@ -39,7 +39,7 @@ beforeEach(() => {
     createTenant: jest.fn(async () => ({})),
     insert: jest.fn(async () => ({ id: 1 })),
     search: jest.fn(async () => ({ results: [] })),
-  } as unknown as jest.Mocked<TesseraClientLike>;
+  } as unknown as jest.Mocked<ErmyaClientLike>;
   provider = {
     embed: jest.fn(async () => [0.5, 0.5, 0.5, 0.5]),
   } as unknown as jest.Mocked<EmbeddingProvider>;
@@ -94,7 +94,7 @@ describe("runPipeline", () => {
   });
 
   it("does not insert when there are no documents", async () => {
-    const emptyDir = mkdtempSync(join(tmpdir(), "tessera-empty-"));
+    const emptyDir = mkdtempSync(join(tmpdir(), "ermya-empty-"));
     await runPipeline(makeConfig(), client, provider, emptyDir);
     expect(provider.embed).not.toHaveBeenCalled();
     expect(client.insert).not.toHaveBeenCalled();

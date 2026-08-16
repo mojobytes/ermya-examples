@@ -9,21 +9,21 @@ public class PipelineTests
     private static Config MakeConfig(int dimension = 4, string tenantId = "rag-quickstart", int chunkSize = 10, int chunkOverlap = 0)
         => new(
             SchemaVersion: 1,
-            Tessera: new TesseraConfig("localhost", 50051, "k", false),
+            Ermya: new ErmyaConfig("localhost", 50051, "k", false),
             Embedding: new EmbeddingConfig("ollama", "http://localhost:11434", "", "nomic-embed-text", "", dimension),
             Ingestion: new IngestionConfig(tenantId, chunkSize, chunkOverlap, "./data"));
 
     private static string TempDataDir(string content = "abcdefghijABCDEFGHIJ")
     {
-        var dir = Path.Combine(Path.GetTempPath(), "tessera-pipe-" + Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(Path.GetTempPath(), "ermya-pipe-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         File.WriteAllText(Path.Combine(dir, "doc.md"), content);
         return dir;
     }
 
-    private static (Mock<ITesseraClient> client, Mock<IEmbeddingProvider> provider) Mocks(int dimension = 4)
+    private static (Mock<IErmyaClient> client, Mock<IEmbeddingProvider> provider) Mocks(int dimension = 4)
     {
-        var client = new Mock<ITesseraClient>();
+        var client = new Mock<IErmyaClient>();
         client.Setup(c => c.CreateTenantAsync(It.IsAny<string>(), It.IsAny<int>())).Returns(Task.CompletedTask);
         client.Setup(c => c.InsertAsync(It.IsAny<InsertCommand>())).ReturnsAsync(1L);
         client.Setup(c => c.SearchAsync(It.IsAny<string>(), It.IsAny<float[]>(), It.IsAny<int>()))
@@ -90,7 +90,7 @@ public class PipelineTests
     public async Task NoDocuments_DoesNotInsert()
     {
         var (client, provider) = Mocks();
-        var emptyDir = Path.Combine(Path.GetTempPath(), "tessera-empty-" + Guid.NewGuid().ToString("N"));
+        var emptyDir = Path.Combine(Path.GetTempPath(), "ermya-empty-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(emptyDir);
         await Pipeline.RunAsync(MakeConfig(), client.Object, provider.Object, emptyDir);
         provider.Verify(p => p.EmbedAsync(It.IsAny<string>()), Times.Never);

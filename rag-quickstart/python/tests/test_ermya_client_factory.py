@@ -1,12 +1,12 @@
-"""Tests for the Tessera client factory: endpoint composition + construction."""
+"""Tests for the Ermya client factory: endpoint composition + construction."""
 
-import tessera_client_factory
-from config_loader import TesseraConfig
+import ermya_client_factory
+from config_loader import ErmyaConfig
 
 
 def test_compose_endpoint_combines_host_and_port():
     assert (
-        tessera_client_factory.compose_endpoint(host="localhost", port=50051)
+        ermya_client_factory.compose_endpoint(host="localhost", port=50051)
         == "localhost:50051"
     )
 
@@ -20,7 +20,7 @@ def test_create_client_passes_correct_args(monkeypatch):
             captured["api_key"] = api_key
             captured["secure"] = secure
 
-    monkeypatch.setattr(tessera_client_factory, "TesseraClient", FakeClient)
-    cfg = TesseraConfig(host="myhost", port=9000, api_key="key123", secure=True)
-    tessera_client_factory.create_client(cfg)
+    monkeypatch.setattr(ermya_client_factory, "ErmyaClient", FakeClient)
+    cfg = ErmyaConfig(host="myhost", port=9000, api_key="key123", secure=True)
+    ermya_client_factory.create_client(cfg)
     assert captured == {"host": "myhost:9000", "api_key": "key123", "secure": True}

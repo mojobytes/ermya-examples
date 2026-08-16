@@ -2,27 +2,27 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Rewire `tessera-examples/rag-quickstart/python` to demonstrate Vector-Level Security by ingesting 11 official AI-governance PDFs with per-document ACLs and running the same query as two different users (Alice, Bob) so results come back disjoint; and have `tessera-launchpad` seed those two users in Keycloak and write the VLS config block.
+**Goal:** Rewire `ermya-examples/rag-quickstart/python` to demonstrate Vector-Level Security by ingesting 11 official AI-governance PDFs with per-document ACLs and running the same query as two different users (Alice, Bob) so results come back disjoint; and have `ermya-launchpad` seed those two users in Keycloak and write the VLS config block.
 
-**Architecture:** The example gains a PDF extractor (oxidize-pdf), a VLS helper module (principal registration + OAuth token fetch), and a rewritten pipeline that inserts each document with an owner ACL then searches with each user's real Keycloak JWT. Config gains an optional `vls` block; when absent the example falls back to the current vector-only behaviour so it still runs standalone. Launchpad seeds Alice/Bob in the generated realm and writes the `vls` block into `tessera_config.json`.
+**Architecture:** The example gains a PDF extractor (oxidize-pdf), a VLS helper module (principal registration + OAuth token fetch), and a rewritten pipeline that inserts each document with an owner ACL then searches with each user's real Keycloak JWT. Config gains an optional `vls` block; when absent the example falls back to the current vector-only behaviour so it still runs standalone. Launchpad seeds Alice/Bob in the generated realm and writes the `vls` block into `ermya_config.json`.
 
-**Tech Stack:** Python 3.10+, `tessera-vector` SDK, `oxidize-pdf` (PDF text), `requests` + `requests-mock` (OAuth), pytest. Rust (Tauri) for launchpad realm/config generation.
+**Tech Stack:** Python 3.10+, `ermya-vector` SDK, `oxidize-pdf` (PDF text), `requests` + `requests-mock` (OAuth), pytest. Rust (Tauri) for launchpad realm/config generation.
 
 ## Global Constraints
 
-- Schema: `tessera_config.json` uses `schema_version: 1` (`config_loader.py:16`). The `vls` block is additive and optional; absence must not break loading.
+- Schema: `ermya_config.json` uses `schema_version: 1` (`config_loader.py:16`). The `vls` block is additive and optional; absence must not break loading.
 - The example MUST run offline with no live server/network for the default test suite (`-m 'not integration'`); PDFs are committed to the repo.
 - Dependency injection: `run_pipeline(config, client, provider, data_dir)` receives its collaborators; new collaborators (PDF extractor) are injected too, so tests never touch a real server, real HTTP, or a real PDF engine.
 - User JWTs (Alice/Bob tokens) MUST NEVER be printed or included in any log/error message.
 - SDK signatures (verified): `Permission(principal: str, action: str)`; `client.register_principal(tenant_id: str, external_id: str, external_kind: str = "user") -> str` (returns principal ULID); `client.insert(tenant_id, vector, metadata=None, permissions: list[Permission] | None = None, database_id="")`; `client.search(tenant_id, vector, k=10, ..., user_token: str | None = None)`.
-- Example config types (verified, `config_loader.py`): dataclasses `TesseraConfig(host, port, api_key, secure)`, `EmbeddingConfig(provider, endpoint, api_key, model, deployment_name, dimension)`, `IngestionConfig(tenant_id, chunk_size, chunk_overlap, data_dir)`, `Config(tessera, embedding, ingestion)`.
+- Example config types (verified, `config_loader.py`): dataclasses `ErmyaConfig(host, port, api_key, secure)`, `EmbeddingConfig(provider, endpoint, api_key, model, deployment_name, dimension)`, `IngestionConfig(tenant_id, chunk_size, chunk_overlap, data_dir)`, `Config(ermya, embedding, ingestion)`.
 - `chunk_text(text: str, chunk_size: int, chunk_overlap: int) -> list[str]` (verified, `chunker.py`).
 
 ---
 
-# PART A — tessera-examples (the runnable demo)
+# PART A — ermya-examples (the runnable demo)
 
-Work in `/Volumes/WD_BLACK/repos/MojoBytes/tessera-ecosystem/tessera-examples/rag-quickstart/python`. Repo branch: `development`. Run pytest from that directory with its `.venv` (create one if absent: `python -m venv .venv && .venv/bin/pip install -e '.[test]'` plus `oxidize-pdf`).
+Work in `/Volumes/WD_BLACK/repos/MojoBytes/ermya-ecosystem/ermya-examples/rag-quickstart/python`. Repo branch: `development`. Run pytest from that directory with its `.venv` (create one if absent: `python -m venv .venv && .venv/bin/pip install -e '.[test]'` plus `oxidize-pdf`).
 
 ## Task A1: PDF extractor
 
@@ -236,24 +236,24 @@ git commit -m "feat(examples): document catalog with per-document ACL owners"
 - Produces: `@dataclass class VlsUser: username: str; password: str`.
 - Produces: `@dataclass class VlsConfig: issuer: str; token_endpoint: str; client_id: str; users: dict[str, VlsUser]` where keys are owner ids (`"alice"`, `"bob"`).
 - Produces: `Config` gains `vls: VlsConfig | None = None` (defaults to `None` so existing configs and `_default_config()` are unchanged).
-- Consumes: reads an optional top-level `"vls"` object from `tessera_config.json`.
+- Consumes: reads an optional top-level `"vls"` object from `ermya_config.json`.
 
 - [ ] **Step 1: Write the failing tests**
 
 ```python
 # tests/test_config_loader.py (append)
 def test_load_config_reads_vls_block(tmp_path):
-    (tmp_path / "tessera_config.json").write_text(json.dumps({
+    (tmp_path / "ermya_config.json").write_text(json.dumps({
         "schema_version": 1,
-        "tessera": {"host": "h", "port": 1, "api_key": "", "secure": False},
+        "ermya": {"host": "h", "port": 1, "api_key": "", "secure": False},
         "embedding": {"provider": "ollama", "endpoint": "e", "api_key": "",
                       "model": "m", "deployment_name": "", "dimension": 3},
         "ingestion": {"tenant_id": "t", "chunk_size": 1, "chunk_overlap": 0,
                       "data_dir": "./data"},
         "vls": {
-            "issuer": "http://kc/realms/tessera",
-            "token_endpoint": "http://kc/realms/tessera/protocol/openid-connect/token",
-            "client_id": "tessera-client",
+            "issuer": "http://kc/realms/ermya",
+            "token_endpoint": "http://kc/realms/ermya/protocol/openid-connect/token",
+            "client_id": "ermya-client",
             "users": {
                 "alice": {"username": "alice", "password": "pw-a"},
                 "bob": {"username": "bob", "password": "pw-b"},
@@ -263,14 +263,14 @@ def test_load_config_reads_vls_block(tmp_path):
     from config_loader import load_config
     cfg = load_config(tmp_path)
     assert cfg.vls is not None
-    assert cfg.vls.client_id == "tessera-client"
+    assert cfg.vls.client_id == "ermya-client"
     assert cfg.vls.users["alice"].password == "pw-a"
 
 
 def test_load_config_without_vls_leaves_it_none(tmp_path):
-    (tmp_path / "tessera_config.json").write_text(json.dumps({
+    (tmp_path / "ermya_config.json").write_text(json.dumps({
         "schema_version": 1,
-        "tessera": {"host": "h", "port": 1, "api_key": "", "secure": False},
+        "ermya": {"host": "h", "port": 1, "api_key": "", "secure": False},
         "embedding": {"provider": "ollama", "endpoint": "e", "api_key": "",
                       "model": "m", "deployment_name": "", "dimension": 3},
         "ingestion": {"tenant_id": "t", "chunk_size": 1, "chunk_overlap": 0,
@@ -304,7 +304,7 @@ class VlsConfig:
     users: dict[str, VlsUser]
 ```
 
-Add `vls: VlsConfig | None = None` as the last field of `Config`. In `_parse_config`, after building tessera/embedding/ingestion, parse the optional block:
+Add `vls: VlsConfig | None = None` as the last field of `Config`. In `_parse_config`, after building ermya/embedding/ingestion, parse the optional block:
 
 ```python
     vls = None
@@ -319,7 +319,7 @@ Add `vls: VlsConfig | None = None` as the last field of `Config`. In `_parse_con
                 for owner, u in vls_raw["users"].items()
             },
         )
-    return Config(tessera=tessera, embedding=embedding, ingestion=ingestion, vls=vls)
+    return Config(ermya=ermya, embedding=embedding, ingestion=ingestion, vls=vls)
 ```
 
 (Adjust the final `return` to match the existing one, adding `vls=vls`.)
@@ -361,9 +361,9 @@ from vls import register_demo_principals, fetch_user_token
 
 def _vls_config():
     return VlsConfig(
-        issuer="http://kc/realms/tessera",
-        token_endpoint="http://kc/realms/tessera/protocol/openid-connect/token",
-        client_id="tessera-client",
+        issuer="http://kc/realms/ermya",
+        token_endpoint="http://kc/realms/ermya/protocol/openid-connect/token",
+        client_id="ermya-client",
         users={
             ALICE: VlsUser("alice", "pw-a"),
             BOB: VlsUser("bob", "pw-b"),
@@ -392,7 +392,7 @@ def test_fetch_user_token_does_password_grant():
         assert token == "jwt-alice"
         body = m.last_request.text
         assert "grant_type=password" in body
-        assert "client_id=tessera-client" in body
+        assert "client_id=ermya-client" in body
         assert "username=alice" in body
 
 
@@ -472,7 +472,7 @@ git commit -m "feat(examples): VLS helpers — register principals + OAuth token
 - Test: `rag-quickstart/python/tests/test_pipeline.py` (extend)
 
 **Interfaces:**
-- Consumes: `extract_text` (A1), `DOCUMENTS`/`ALICE`/`BOB` (A2), `VlsConfig` (A3), `register_demo_principals`/`fetch_user_token` (A4), existing `chunk_text`, `Permission` from `tessera`.
+- Consumes: `extract_text` (A1), `DOCUMENTS`/`ALICE`/`BOB` (A2), `VlsConfig` (A3), `register_demo_principals`/`fetch_user_token` (A4), existing `chunk_text`, `Permission` from `ermya`.
 - Produces: `run_pipeline(config, client, provider, data_dir, *, extract=extract_text, fetch_token=fetch_user_token)` — same public entry, with injectable `extract`/`fetch_token` for tests. When `config.vls` is set, runs the VLS demo; otherwise falls back to the current vector-only ingest+search.
 
 - [ ] **Step 1: Write the failing tests**
@@ -481,15 +481,15 @@ git commit -m "feat(examples): VLS helpers — register principals + OAuth token
 # tests/test_pipeline.py (append)
 from unittest.mock import MagicMock
 from pathlib import Path
-from config_loader import Config, TesseraConfig, EmbeddingConfig, IngestionConfig, VlsConfig, VlsUser
+from config_loader import Config, ErmyaConfig, EmbeddingConfig, IngestionConfig, VlsConfig, VlsUser
 from documents import ALICE, BOB
-from tessera import Permission
+from ermya import Permission
 import pipeline as pipeline_mod
 
 
 def _base_config(vls):
     return Config(
-        tessera=TesseraConfig("h", 1, "", False),
+        ermya=ErmyaConfig("h", 1, "", False),
         embedding=EmbeddingConfig("ollama", "e", "", "m", "", 3),
         ingestion=IngestionConfig("t1", 10, 0, "./data"),
         vls=vls,
@@ -498,7 +498,7 @@ def _base_config(vls):
 
 def _vls():
     return VlsConfig(
-        issuer="iss", token_endpoint="te", client_id="tessera-client",
+        issuer="iss", token_endpoint="te", client_id="ermya-client",
         users={ALICE: VlsUser("alice", "pw-a"), BOB: VlsUser("bob", "pw-b")},
     )
 
@@ -572,7 +572,7 @@ Rewrite `pipeline.py`. Keep the banner and the standalone fallback. New shape:
 ```python
 from documents import DOCUMENTS
 from pdf_extractor import extract_text
-from tessera import Permission
+from ermya import Permission
 from vls import register_demo_principals, fetch_user_token
 
 DEMO_QUERY = "transparency obligations for high-risk AI systems"
@@ -707,7 +707,7 @@ git commit -m "feat(examples): wire main + commit official PDFs + SOURCES + READ
 - Create: `rag-quickstart/python/tests/test_integration_vls.py`
 
 **Interfaces:**
-- Consumes: a live launchpad-deployed stack (Tessera + Keycloak with Alice/Bob) and a real `tessera_config.json` with a `vls` block.
+- Consumes: a live launchpad-deployed stack (Ermya + Keycloak with Alice/Bob) and a real `ermya_config.json` with a `vls` block.
 
 - [ ] **Step 1: Write the integration test**
 
@@ -715,7 +715,7 @@ git commit -m "feat(examples): wire main + commit official PDFs + SOURCES + READ
 # tests/test_integration_vls.py
 import pytest
 from config_loader import load_config
-from tessera_client_factory import create_client
+from ermya_client_factory import create_client
 from embedding import create_provider
 from pipeline import run_pipeline
 from pathlib import Path
@@ -723,14 +723,14 @@ from pathlib import Path
 
 @pytest.mark.integration
 def test_vls_end_to_end_disjoint_results():
-    """Requires a launchpad-deployed stack + tessera_config.json with a vls block.
+    """Requires a launchpad-deployed stack + ermya_config.json with a vls block.
     Ingests the 11 PDFs, then re-queries as each user and asserts the recovered
     jurisdictions are disjoint (Alice = EU/UK/UNESCO/OECD/CoE; Bob = the rest)."""
     from vls import fetch_user_token
 
     config = load_config(Path("."))
     assert config.vls is not None, "run this against a launchpad-generated config"
-    client = create_client(config.tessera)
+    client = create_client(config.ermya)
     provider = create_provider(config.embedding)
 
     # Ingest everything (this registers principals + inserts with ACLs).
@@ -771,9 +771,9 @@ git commit -m "test(examples): integration test for end-to-end VLS (marked, skip
 
 ---
 
-# PART B — tessera-launchpad (seed Keycloak + write VLS config)
+# PART B — ermya-launchpad (seed Keycloak + write VLS config)
 
-Work in `/Volumes/WD_BLACK/repos/MojoBytes/tessera-ecosystem/tessera-launchpad`. This lands on `feature/example-project-generator` (where the generator lives) — confirm the branch before starting; do NOT try to merge that branch into main here (that reconciliation is out of scope for this plan). Run Rust tests with `cargo test` in `src-tauri`.
+Work in `/Volumes/WD_BLACK/repos/MojoBytes/ermya-ecosystem/ermya-launchpad`. This lands on `feature/example-project-generator` (where the generator lives) — confirm the branch before starting; do NOT try to merge that branch into main here (that reconciliation is out of scope for this plan). Run Rust tests with `cargo test` in `src-tauri`.
 
 ## Task B1: Seed Alice and Bob in the Keycloak realm
 
@@ -825,15 +825,15 @@ git add src-tauri/src/config/realm.rs
 git commit -m "feat(launchpad): seed alice and bob demo users in the Keycloak realm"
 ```
 
-## Task B2: Write the VLS block into tessera_config.json
+## Task B2: Write the VLS block into ermya_config.json
 
 **Files:**
-- Modify: `src-tauri/src/config/example_config.rs` (the `tessera_config.json` builder)
+- Modify: `src-tauri/src/config/example_config.rs` (the `ermya_config.json` builder)
 - Test: `src-tauri/src/config/example_config.rs` (extend its test module)
 
 **Interfaces:**
-- Consumes: the deployed Keycloak issuer/token endpoint and `tessera-client` client id (already known to the realm generator); the demo user credentials from B1.
-- Produces: the written `tessera_config.json` gains a top-level `"vls"` object matching the schema Part A Task A3 parses: `{issuer, token_endpoint, client_id, users: {alice: {username, password}, bob: {username, password}}}`.
+- Consumes: the deployed Keycloak issuer/token endpoint and `ermya-client` client id (already known to the realm generator); the demo user credentials from B1.
+- Produces: the written `ermya_config.json` gains a top-level `"vls"` object matching the schema Part A Task A3 parses: `{issuer, token_endpoint, client_id, users: {alice: {username, password}, bob: {username, password}}}`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -843,7 +843,7 @@ fn config_includes_vls_block_for_demo_users() {
     let json = build_example_config(&sample_config_input());
     let v: serde_json::Value = serde_json::from_str(&json).unwrap();
     let vls = &v["vls"];
-    assert_eq!(vls["client_id"], "tessera-client");
+    assert_eq!(vls["client_id"], "ermya-client");
     assert!(vls["issuer"].is_string());
     assert!(vls["token_endpoint"].is_string());
     assert_eq!(vls["users"]["alice"]["username"], "alice");
@@ -860,7 +860,7 @@ Expected: FAIL — no `vls` key.
 
 - [ ] **Step 3: Write minimal implementation**
 
-In `example_config.rs`, add a `vls` object to the serialized config, derived from the same Keycloak host/port the realm uses (issuer `http://<kc-host>:<port>/realms/tessera`, token endpoint `.../protocol/openid-connect/token`), `client_id = "tessera-client"`, and the alice/bob usernames+passwords used in B1. Keep the plaintext-demo warning consistent with the existing `_warning` field.
+In `example_config.rs`, add a `vls` object to the serialized config, derived from the same Keycloak host/port the realm uses (issuer `http://<kc-host>:<port>/realms/ermya`, token endpoint `.../protocol/openid-connect/token`), `client_id = "ermya-client"`, and the alice/bob usernames+passwords used in B1. Keep the plaintext-demo warning consistent with the existing `_warning` field.
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -871,7 +871,7 @@ Expected: PASS. Run the full example_config test module too.
 
 ```bash
 git add src-tauri/src/config/example_config.rs
-git commit -m "feat(launchpad): write VLS block (issuer, client, demo users) into tessera_config.json"
+git commit -m "feat(launchpad): write VLS block (issuer, client, demo users) into ermya_config.json"
 ```
 
 ## Task B3: Backend test suite green
@@ -892,7 +892,7 @@ Expected: green.
 
 ## Verification (end-to-end, manual — after both parts land)
 
-1. On a clean machine, launchpad (feature branch) deploys the stack and generates the Python project; `tessera_config.json` contains the `vls` block and Keycloak has alice/bob.
-2. `pip install -e '.[test]'` + `pip install oxidize-pdf tessera-vector` in the generated project.
+1. On a clean machine, launchpad (feature branch) deploys the stack and generates the Python project; `ermya_config.json` contains the `vls` block and Keycloak has alice/bob.
+2. `pip install -e '.[test]'` + `pip install oxidize-pdf ermya-vector` in the generated project.
 3. `python main.py` ingests the 11 PDFs with per-document ACLs, fetches Alice's and Bob's tokens, runs the same query with each, prints disjoint result sets (Alice: EU/UK/UNESCO/OECD/CoE; Bob: US/AU/CA/SG/JP/KR).
 4. `pytest -m "not integration"` green in the example; `pytest -m integration` green against the live stack.

@@ -1,7 +1,7 @@
 """RAG quickstart orchestration: parse -> chunk -> embed -> insert -> search.
 
-The Tessera client and embedding provider are injected so the whole flow is
-unit-testable without a live Tessera or real HTTP. When ``config.vls`` is set,
+The Ermya client and embedding provider are injected so the whole flow is
+unit-testable without a live Ermya or real HTTP. When ``config.vls`` is set,
 the pipeline demonstrates Vector-Level Security: it ingests the fixed PDF
 catalog (``documents.DOCUMENTS``) — using oxidize-pdf's RAG-oriented semantic
 chunking, so each vector carries heading and page provenance — with a
@@ -25,7 +25,7 @@ from dimension_check import verify_dimension
 from documents import DOCUMENTS
 from embedding import EmbeddingProvider
 from pdf_extractor import extract_rag_chunks
-from tessera import Permission
+from ermya import Permission
 from vls import fetch_user_token, register_demo_principals
 
 BANNER = (
@@ -175,7 +175,7 @@ def run_pipeline(
     """
     print(BANNER)
     print(
-        f"\nTarget Tessera: {config.tessera.host}:{config.tessera.port} "
+        f"\nTarget Ermya: {config.ermya.host}:{config.ermya.port} "
         f"(tenant '{config.ingestion.tenant_id}', dimension "
         f"{config.embedding.dimension})"
     )

@@ -3,7 +3,7 @@ namespace RagQuickstart;
 /// <summary>
 /// RAG quickstart entry point.
 ///
-/// Reads tessera_config.json (or documented defaults), builds the real Tessera
+/// Reads ermya_config.json (or documented defaults), builds the real Ermya
 /// client and embedding provider, and runs the ingest + demo-search pipeline.
 ///
 /// Run: dotnet run --project src/RagQuickstart
@@ -16,7 +16,7 @@ public static class Program
         {
             var config = ConfigLoader.Load();
             using var http = new HttpClient();
-            using var client = new TesseraClientAdapter(config.Tessera);
+            using var client = new ErmyaClientAdapter(config.Ermya);
             var provider = EmbeddingProviderFactory.Create(config.Embedding, http);
 
             var here = AppContext.BaseDirectory;

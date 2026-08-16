@@ -14,12 +14,12 @@ public sealed record InsertCommand(
 public sealed record SearchHit(long Id, float Distance, IReadOnlyDictionary<string, object> Metadata);
 
 /// <summary>
-/// The slice of Tessera the example uses. Keeping our own interface (instead of
+/// The slice of Ermya the example uses. Keeping our own interface (instead of
 /// depending on the SDK's protobuf types directly) lets the pipeline be mocked
 /// without dragging the gRPC stack into unit tests. A thin adapter over the real
 /// SDK implements this.
 /// </summary>
-public interface ITesseraClient
+public interface IErmyaClient
 {
     Task CreateTenantAsync(string tenantId, int dimension);
 

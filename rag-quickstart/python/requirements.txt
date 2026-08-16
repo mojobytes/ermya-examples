@@ -1,5 +1,5 @@
-# Tessera RAG quickstart (Python) — runtime dependencies
-# Distribution name is `tessera-vector`; the import name is `tessera`.
-tessera-vector==0.4.0
+# Ermya RAG quickstart (Python) — runtime dependencies
+# Distribution name is `ermya-vector`; the import name is `ermya`.
+ermya-vector==0.4.1
 requests>=2.31,<3
 oxidize-pdf>=0.15.1

@@ -1,20 +1,20 @@
-using Tessera.Vectordb.V1;
+using Ermya.Vector.V1;
 
-using SdkClient = Tessera.Client.TesseraClient;
-using SdkClientOptions = Tessera.Client.TesseraClientOptions;
+using SdkClient = Ermya.Client.ErmyaClient;
+using SdkClientOptions = Ermya.Client.ErmyaClientOptions;
 
 namespace RagQuickstart;
 
 /// <summary>
-/// Adapts the real Tessera SDK (protobuf request/response types) to the example's
-/// simple <see cref="ITesseraClient"/> surface, keeping the protobuf stack out of
+/// Adapts the real Ermya SDK (protobuf request/response types) to the example's
+/// simple <see cref="IErmyaClient"/> surface, keeping the protobuf stack out of
 /// the pipeline and its unit tests.
 /// </summary>
-public sealed class TesseraClientAdapter : ITesseraClient, IDisposable
+public sealed class ErmyaClientAdapter : IErmyaClient, IDisposable
 {
     private readonly SdkClient _client;
 
-    public TesseraClientAdapter(TesseraConfig config)
+    public ErmyaClientAdapter(ErmyaConfig config)
     {
         _client = new SdkClient(new SdkClientOptions
         {
@@ -29,8 +29,8 @@ public sealed class TesseraClientAdapter : ITesseraClient, IDisposable
     {
         await _client.CreateTenantAsync(new CreateTenantRequest
         {
-            TenantId = tenantId,
-            Dimension = (uint)dimension,
+            TenantName = tenantId,
+            DefaultDatabaseDimension = (uint)dimension,
         });
     }
 

@@ -1,7 +1,7 @@
 {
-  "name": "tessera-rag-quickstart-ts",
+  "name": "ermya-rag-quickstart-ts",
   "version": "0.1.0",
-  "description": "Tessera RAG quickstart example (TypeScript)",
+  "description": "Ermya RAG quickstart example (TypeScript)",
   "type": "module",
   "private": true,
   "scripts": {
@@ -12,7 +12,7 @@
   "dependencies": {
     "@grpc/grpc-js": "^1.14.4",
     "@grpc/proto-loader": "^0.7.15",
-    "@tesseradb/client": "file:../../../tessera-js",
+    "@ermya/client": "file:../../../ermya-js",
     "long": "^5.3.2",
     "protobufjs": "^8.5.0"
   },

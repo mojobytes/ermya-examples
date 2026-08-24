@@ -1,6 +1,6 @@
 """Integration test for end-to-end VLS demo with real Keycloak and launchpad stack.
 
-This test requires a launchpad-deployed Tessera + Keycloak and a tessera_config.json
+This test requires a launchpad-deployed Ermya + Keycloak and a ermya_config.json
 with a vls block. It is marked @pytest.mark.integration and is deselected by default
 (run with -m integration to enable).
 
@@ -9,7 +9,7 @@ ingesting the full corpus with per-document ACLs and re-querying as each user.
 """
 import pytest
 from config_loader import load_config
-from tessera_client_factory import create_client
+from ermya_client_factory import create_client
 from embedding import create_provider
 from pipeline import run_pipeline
 from pathlib import Path
@@ -17,14 +17,14 @@ from pathlib import Path
 
 @pytest.mark.integration
 def test_vls_end_to_end_disjoint_results():
-    """Requires a launchpad-deployed stack + tessera_config.json with a vls block.
+    """Requires a launchpad-deployed stack + ermya_config.json with a vls block.
     Ingests the 11 PDFs, then re-queries as each user and asserts the recovered
     jurisdictions are disjoint (Alice = EU/UK/UNESCO/OECD/CoE; Bob = the rest)."""
     from vls import fetch_user_token
 
     config = load_config(Path("."))
     assert config.vls is not None, "run this against a launchpad-generated config"
-    client = create_client(config.tessera)
+    client = create_client(config.ermya)
     provider = create_provider(config.embedding)
 
     # Ingest everything (this registers principals + inserts with ACLs).

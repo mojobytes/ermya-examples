@@ -5,13 +5,13 @@ import { describe, expect, it, jest } from "@jest/globals";
 const createClient = jest.fn(() => ({ tag: "client" }));
 const createProvider = jest.fn(() => ({ tag: "provider" }));
 const loadConfig = jest.fn(() => ({
-  tessera: { host: "localhost", port: 50051, apiKey: "", secure: false },
+  ermya: { host: "localhost", port: 50051, apiKey: "", secure: false },
   embedding: { provider: "ollama", endpoint: "", apiKey: "", model: "", deploymentName: "", dimension: 768 },
   ingestion: { tenantId: "rag-quickstart", chunkSize: 800, chunkOverlap: 100, dataDir: "./data" },
 }));
 const runPipeline = jest.fn(async () => {});
 
-jest.unstable_mockModule("../src/tessera-client-factory.js", () => ({ createClient }));
+jest.unstable_mockModule("../src/ermya-client-factory.js", () => ({ createClient }));
 jest.unstable_mockModule("../src/embedding.js", () => ({ createProvider }));
 jest.unstable_mockModule("../src/config-loader.js", () => ({ loadConfig }));
 jest.unstable_mockModule("../src/pipeline.js", () => ({ runPipeline }));

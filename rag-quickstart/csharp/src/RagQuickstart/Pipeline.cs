@@ -2,8 +2,8 @@ namespace RagQuickstart;
 
 /// <summary>
 /// RAG quickstart orchestration: parse -> chunk -> embed -> insert -> search.
-/// The Tessera client and embedding provider are injected so the whole flow is
-/// unit-testable without a live Tessera or real HTTP.
+/// The Ermya client and embedding provider are injected so the whole flow is
+/// unit-testable without a live Ermya or real HTTP.
 /// </summary>
 public static class Pipeline
 {
@@ -14,13 +14,13 @@ public static class Pipeline
 
     public static async Task RunAsync(
         Config config,
-        ITesseraClient client,
+        IErmyaClient client,
         IEmbeddingProvider provider,
         string dataDir)
     {
         Console.WriteLine(Banner);
         Console.WriteLine(
-            $"\nTarget Tessera: {config.Tessera.Host}:{config.Tessera.Port} " +
+            $"\nTarget Ermya: {config.Ermya.Host}:{config.Ermya.Port} " +
             $"(tenant '{config.Ingestion.TenantId}', dimension {config.Embedding.Dimension})");
         Console.WriteLine($"Embedding provider: {config.Embedding.Provider}\n");
 
@@ -37,7 +37,7 @@ public static class Pipeline
     }
 
     private static async Task<float[]?> IngestDocumentsAsync(
-        ITesseraClient client,
+        IErmyaClient client,
         IEmbeddingProvider provider,
         Config config,
         string dataDir)
@@ -78,7 +78,7 @@ public static class Pipeline
         return firstVector;
     }
 
-    private static async Task DemoSearchAsync(ITesseraClient client, Config config, float[] queryVector)
+    private static async Task DemoSearchAsync(IErmyaClient client, Config config, float[] queryVector)
     {
         var results = await client.SearchAsync(config.Ingestion.TenantId, queryVector, 5);
         Console.WriteLine($"\nDemo search returned {results.Count} result(s):");

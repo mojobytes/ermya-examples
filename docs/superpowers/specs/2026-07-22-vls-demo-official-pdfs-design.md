@@ -1,12 +1,12 @@
 # Design — VLS Demo with Official AI-Governance PDFs
 
 **Date:** 2026-07-22
-**Repos touched:** `tessera-examples` (the demo), `tessera-launchpad` (deploy + config), `tessera-python` (SDK — already complete, no changes)
+**Repos touched:** `ermya-examples` (the demo), `ermya-launchpad` (deploy + config), `ermya-python` (SDK — already complete, no changes)
 **Roadmap:** Phase 3 of the go-to-market plan — make the generated example demonstrate the SDK's flagship differentiator (Vector-Level Security) on complex, real documents.
 
 ## Context
 
-The launchpad-generated Python example (`tessera-examples/rag-quickstart/python`)
+The launchpad-generated Python example (`ermya-examples/rag-quickstart/python`)
 today does only `create_tenant + insert + search` on vector-only search. That
 demonstrates nothing a generic vector DB cannot do. The SDK now exposes
 Vector-Level Security (VLS): permission-aware search where the same query
@@ -16,7 +16,7 @@ prospect sees permission-filtered RAG over hard, real-world documents.
 
 Scope decisions (fixed by the user during brainstorming):
 - Differentiator shown: **VLS only** (hybrid/multi-db are separate future demos).
-- Example stays in `tessera-examples`; launchpad **clones + configures** it
+- Example stays in `ermya-examples`; launchpad **clones + configures** it
   (unchanged deployment pattern).
 - User tokens are **real Keycloak JWTs** obtained via OAuth password grant
   against the Keycloak that launchpad deploys (Option A — realistic).
@@ -28,19 +28,19 @@ Scope decisions (fixed by the user during brainstorming):
 ## Architecture (3 repos, 3 responsibilities)
 
 ```
-tessera-launchpad          tessera-examples                 Tessera server (v0.53.x)
+ermya-launchpad          ermya-examples                 Ermya server (v0.53.x)
 (deploy + configure)       (the runnable demo)              (VLS, no changes)
 ────────────────────       ─────────────────────            ────────────────────────
 1. Keycloak realm seeds    3. pipeline:                     5. validates x-user-token
    Alice + Bob (with          - register principals            against Keycloak
    passwords)                 - extract PDFs (oxidize)         (signature/exp/issuer)
-2. writes tessera_config    - ingest w/ per-doc ACLs        6. filters search results
+2. writes ermya_config    - ingest w/ per-doc ACLs        6. filters search results
    .json (+ VLS block:        - OAuth login Alice/Bob          by that user's grants
    issuer, client_id,         - same query, 2 tokens
    demo user creds)           - print disjoint results
 ```
 
-**End-to-end flow:** launchpad deploys the stack (Tessera + Keycloak with Alice
+**End-to-end flow:** launchpad deploys the stack (Ermya + Keycloak with Alice
 & Bob) and generates the Python project with its config → user runs
 `python main.py` → pipeline ingests the 11 PDFs with per-document ACLs, obtains
 Alice's and Bob's JWTs from Keycloak, runs the **same** query with each token,
@@ -48,7 +48,7 @@ and prints that Alice and Bob get **disjoint** result sets.
 
 ## Components
 
-### tessera-examples (the demo)
+### ermya-examples (the demo)
 
 **`pdf_extractor.py`** (new) — the "tractor". `extract_text(path) -> str` using
 `oxidize_pdf.PdfReader.open(path).extract_text()`. One function, injectable, so
@@ -113,19 +113,19 @@ Sources (official, primary where available):
 - Council of Europe: https://rm.coe.int/1680afae3c
 - South Korea (English translation, CSET/Georgetown): https://aibasicact.kr/
 
-### tessera-launchpad (deploy + config)
+### ermya-launchpad (deploy + config)
 
 **`realm.rs`** — extend the existing `"users"` array (currently just `admin`)
 to also seed `alice` and `bob` with known demo passwords, both able to obtain
-tokens from the `tessera-client` OIDC client that the realm already declares.
+tokens from the `ermya-client` OIDC client that the realm already declares.
 
-**`example_config.rs`** / `tessera_config.json` — add a `vls` block:
+**`example_config.rs`** / `ermya_config.json` — add a `vls` block:
 `{ issuer, token_endpoint, client_id, alice: {username, password},
 bob: {username, password} }`. The generated example reads it to run the OAuth
 password grant. Marked clearly as demo-only plaintext (consistent with the
 example's existing `_warning` banner).
 
-### Tessera server
+### Ermya server
 
 No changes. It already validates `x-user-token` (signature/expiry/issuer via
 Keycloak) and filters results by the caller's grants.
@@ -140,7 +140,7 @@ Keycloak) and filters results by the caller's grants.
   (`pip install oxidize-pdf`) rather than a raw ImportError.
 - **Keycloak token fetch failure** (Keycloak not ready, wrong creds): surface a
   clear message pointing at the deployed Keycloak URL and the demo creds in
-  `tessera_config.json`; do not print the token.
+  `ermya_config.json`; do not print the token.
 - **VLS not configured** (no `vls` block in config, i.e. run outside launchpad):
   fall back to the current behaviour — ingest without ACLs and run a single
   vector search — so the example still runs standalone. The VLS demo section is
@@ -181,8 +181,8 @@ fully mocked, no live server or network — `-m 'not integration'` default):
 ## Verification (end-to-end)
 
 1. On a clean machine, launchpad deploys the stack and generates the Python
-   project with a `tessera_config.json` carrying the `vls` block.
-2. `pip install` the example's deps (incl. `oxidize-pdf`, `tessera-vector`).
+   project with a `ermya_config.json` carrying the `vls` block.
+2. `pip install` the example's deps (incl. `oxidize-pdf`, `ermya-vector`).
 3. `python main.py` ingests the 11 PDFs with per-document ACLs.
 4. The demo prints Alice's results (EU/UK/UNESCO/OECD/CoE fragments) and Bob's
    (NIST/AU/CA/SG/JP/KR fragments) for the **same** query — disjoint sets.

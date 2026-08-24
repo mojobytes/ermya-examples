@@ -8,9 +8,9 @@ from vls import register_demo_principals, fetch_user_token
 
 def _vls_config():
     return VlsConfig(
-        issuer="http://kc/realms/tessera",
-        token_endpoint="http://kc/realms/tessera/protocol/openid-connect/token",
-        client_id="tessera-client",
+        issuer="http://kc/realms/ermya",
+        token_endpoint="http://kc/realms/ermya/protocol/openid-connect/token",
+        client_id="ermya-client",
         users={
             ALICE: VlsUser("alice", "pw-a"),
             BOB: VlsUser("bob", "pw-b"),
@@ -39,7 +39,7 @@ def test_fetch_user_token_does_password_grant():
         assert token == "jwt-alice"
         body = m.last_request.text
         assert "grant_type=password" in body
-        assert "client_id=tessera-client" in body
+        assert "client_id=ermya-client" in body
         assert "username=alice" in body
 
 

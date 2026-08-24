@@ -3,12 +3,12 @@ using System.Text.Json;
 namespace RagQuickstart;
 
 /// <summary>
-/// Load tessera_config.json by walking up to the repo root, or fall back to
+/// Load ermya_config.json by walking up to the repo root, or fall back to
 /// documented defaults so the example runs standalone.
 /// </summary>
 public static class ConfigLoader
 {
-    private const string ConfigFilename = "tessera_config.json";
+    private const string ConfigFilename = "ermya_config.json";
     private const int SupportedSchemaVersion = 1;
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -18,7 +18,7 @@ public static class ConfigLoader
 
     public static Config Default() => new(
         SchemaVersion: SupportedSchemaVersion,
-        Tessera: new TesseraConfig("localhost", 50051, ApiKey: "", Secure: false),
+        Ermya: new ErmyaConfig("localhost", 50051, ApiKey: "", Secure: false),
         Embedding: new EmbeddingConfig(
             Provider: "ollama",
             Endpoint: "http://localhost:11434",

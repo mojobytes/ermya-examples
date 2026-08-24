@@ -1,7 +1,7 @@
 """Tests for the orchestration pipeline.
 
-The Tessera client and embedding provider are injected, so the whole flow is
-exercised with mocks — no live Tessera, no real HTTP.
+The Ermya client and embedding provider are injected, so the whole flow is
+exercised with mocks — no live Ermya, no real HTTP.
 """
 
 from pathlib import Path
@@ -13,14 +13,14 @@ from config_loader import (
     Config,
     EmbeddingConfig,
     IngestionConfig,
-    TesseraConfig,
+    ErmyaConfig,
 )
 from pipeline import run_pipeline
 
 
 def make_config(dimension=4, tenant_id="rag-quickstart", chunk_size=10, chunk_overlap=0):
     return Config(
-        tessera=TesseraConfig(host="localhost", port=50051, api_key="k", secure=False),
+        ermya=ErmyaConfig(host="localhost", port=50051, api_key="k", secure=False),
         embedding=EmbeddingConfig(
             provider="ollama",
             endpoint="http://localhost:11434",
@@ -129,7 +129,7 @@ def _chunks(*texts):
 
 def _base_config(vls):
     return Config(
-        tessera=TesseraConfig("h", 1, "", False),
+        ermya=ErmyaConfig("h", 1, "", False),
         embedding=EmbeddingConfig("ollama", "e", "", "m", "", 3),
         ingestion=IngestionConfig("t1", 10, 0, "./data"),
         vls=vls,
@@ -138,7 +138,7 @@ def _base_config(vls):
 
 def _vls():
     return VlsConfig(
-        issuer="iss", token_endpoint="te", client_id="tessera-client",
+        issuer="iss", token_endpoint="te", client_id="ermya-client",
         users={ALICE: VlsUser("alice", "pw-a"), BOB: VlsUser("bob", "pw-b")},
     )
 

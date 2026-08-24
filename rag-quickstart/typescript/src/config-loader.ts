@@ -1,8 +1,8 @@
 /**
- * Load tessera_config.json by walking up to the repo root, or fall back to
+ * Load ermya_config.json by walking up to the repo root, or fall back to
  * documented defaults so the example runs standalone.
  *
- * The Tessera Launchpad writes tessera_config.json into the repository root.
+ * The Ermya Launchpad writes ermya_config.json into the repository root.
  * Examples live in rag-quickstart/<lang>/, so we search upward from the start
  * directory to find it.
  */
@@ -10,10 +10,10 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
-const CONFIG_FILENAME = "tessera_config.json";
+const CONFIG_FILENAME = "ermya_config.json";
 const SUPPORTED_SCHEMA_VERSION = 1;
 
-export interface TesseraConfig {
+export interface ErmyaConfig {
   host: string;
   port: number;
   apiKey: string;
@@ -37,14 +37,14 @@ export interface IngestionConfig {
 }
 
 export interface Config {
-  tessera: TesseraConfig;
+  ermya: ErmyaConfig;
   embedding: EmbeddingConfig;
   ingestion: IngestionConfig;
 }
 
 function defaultConfig(): Config {
   return {
-    tessera: { host: "localhost", port: 50051, apiKey: "", secure: false },
+    ermya: { host: "localhost", port: 50051, apiKey: "", secure: false },
     embedding: {
       provider: "ollama",
       endpoint: "http://localhost:11434",
@@ -84,11 +84,11 @@ function parseConfig(data: any): Config {
         `this example supports schema_version ${SUPPORTED_SCHEMA_VERSION}.`,
     );
   }
-  const t = data.tessera;
+  const t = data.ermya;
   const e = data.embedding;
   const i = data.ingestion;
   return {
-    tessera: {
+    ermya: {
       host: t.host,
       port: Number(t.port),
       apiKey: t.api_key ?? "",

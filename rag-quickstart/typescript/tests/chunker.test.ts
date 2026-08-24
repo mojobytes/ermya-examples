@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { chunkText, parseMarkdownFiles } from "../src/chunker.js";
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), "tessera-chunk-"));
+  return mkdtempSync(join(tmpdir(), "ermya-chunk-"));
 }
 
 describe("chunkText", () => {

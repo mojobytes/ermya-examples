@@ -7,7 +7,7 @@ import { loadConfig } from "../src/config-loader.js";
 const MINIMAL_CONFIG = {
   _warning: "w",
   schema_version: 1,
-  tessera: { host: "myhost", port: 9999, api_key: "k", secure: false },
+  ermya: { host: "myhost", port: 9999, api_key: "k", secure: false },
   embedding: {
     provider: "openai",
     endpoint: "",
@@ -25,22 +25,22 @@ const MINIMAL_CONFIG = {
 };
 
 function tempDir(): string {
-  return mkdtempSync(join(tmpdir(), "tessera-cfg-"));
+  return mkdtempSync(join(tmpdir(), "ermya-cfg-"));
 }
 
 function writeConfig(dir: string, data: unknown = MINIMAL_CONFIG): void {
-  writeFileSync(join(dir, "tessera_config.json"), JSON.stringify(data));
+  writeFileSync(join(dir, "ermya_config.json"), JSON.stringify(data));
 }
 
 describe("loadConfig", () => {
-  it("reads the tessera block from a present file", () => {
+  it("reads the ermya block from a present file", () => {
     const dir = tempDir();
     writeConfig(dir);
     const config = loadConfig(dir);
-    expect(config.tessera.host).toBe("myhost");
-    expect(config.tessera.port).toBe(9999);
-    expect(config.tessera.apiKey).toBe("k");
-    expect(config.tessera.secure).toBe(false);
+    expect(config.ermya.host).toBe("myhost");
+    expect(config.ermya.port).toBe(9999);
+    expect(config.ermya.apiKey).toBe("k");
+    expect(config.ermya.secure).toBe(false);
   });
 
   it("reads embedding and ingestion blocks", () => {
@@ -58,8 +58,8 @@ describe("loadConfig", () => {
   it("returns documented defaults when the file is absent", () => {
     const dir = tempDir();
     const config = loadConfig(dir);
-    expect(config.tessera.host).toBe("localhost");
-    expect(config.tessera.port).toBe(50051);
+    expect(config.ermya.host).toBe("localhost");
+    expect(config.ermya.port).toBe(50051);
     expect(config.embedding.provider).toBe("ollama");
     expect(config.embedding.endpoint).toBe("http://localhost:11434");
     expect(config.embedding.model).toBe("nomic-embed-text");
@@ -73,7 +73,7 @@ describe("loadConfig", () => {
     mkdirSync(nested, { recursive: true });
     writeConfig(root);
     const config = loadConfig(nested);
-    expect(config.tessera.host).toBe("myhost");
+    expect(config.ermya.host).toBe("myhost");
   });
 
   it("throws on an unknown schema version", () => {

@@ -1,10 +1,10 @@
 [project]
-name = "tessera-rag-quickstart"
+name = "ermya-rag-quickstart"
 version = "0.1.0"
-description = "Tessera RAG quickstart example (Python)"
+description = "Ermya RAG quickstart example (Python)"
 requires-python = ">=3.10"
 dependencies = [
-    "tessera-vector==0.4.0",
+    "ermya-vector==0.4.0",
     "requests>=2.31,<3",
     "oxidize-pdf>=0.15.1",
 ]

@@ -1,12 +1,12 @@
-# Tessera Examples
+# Ermya Examples
 
-Runnable example projects for [Tessera](https://github.com/mojobytes), the
+Runnable example projects for [Ermya](https://github.com/mojobytes), the
 vector database. Each example is self-contained: open it, run it, modify it.
 
 > ⚠️ **EXAMPLE / QUICKSTART — keys in plaintext, not production-ready.**
-> These examples read API keys from a `tessera_config.json` file in **plaintext**
+> These examples read API keys from a `ermya_config.json` file in **plaintext**
 > by design, so you can run them as-is. **Do not** use this approach in
-> production, and **do not** commit `tessera_config.json` (it is git-ignored).
+> production, and **do not** commit `ermya_config.json` (it is git-ignored).
 
 ## `rag-quickstart`
 
@@ -15,9 +15,9 @@ implemented identically in three languages:
 
 | Language   | Folder                       | SDK                    |
 |------------|------------------------------|------------------------|
-| Python     | `rag-quickstart/python`      | `tessera`              |
-| TypeScript | `rag-quickstart/typescript`  | `@tesseradb/client`    |
-| C#         | `rag-quickstart/csharp`      | `Tessera.Client`       |
+| Python     | `rag-quickstart/python`      | `ermya`              |
+| TypeScript | `rag-quickstart/typescript`  | `@ermyadb/client`    |
+| C#         | `rag-quickstart/csharp`      | `Ermya.Client`       |
 
 Each one performs the same four stages:
 
@@ -25,29 +25,29 @@ Each one performs the same four stages:
 2. **Chunk** them deterministically (`chunk_size` / `chunk_overlap`).
 3. **Embed** each chunk with a real embedding provider
    (`openai`, `azure-openai`, or `ollama`).
-4. **Insert** the vectors into Tessera, then run a **demo search**.
+4. **Insert** the vectors into Ermya, then run a **demo search**.
 
 ## Configuration
 
 Each example reads its connection and embedding settings from a
-`tessera_config.json` file. The [Tessera Launchpad](https://github.com/mojobytes)
+`ermya_config.json` file. The [Ermya Launchpad](https://github.com/mojobytes)
 writes this file into the repository root when it generates a project for you.
 
-**If `tessera_config.json` is absent, each example falls back to documented
-defaults** (local Tessera on `localhost:50051`, Ollama embeddings via
+**If `ermya_config.json` is absent, each example falls back to documented
+defaults** (local Ermya on `localhost:50051`, Ollama embeddings via
 `nomic-embed-text`) so the repo is runnable on its own.
 
 The config file is searched by walking **up** the directory tree from the
 example folder to the repository root, so the single file written at the root
 serves whichever language you run.
 
-### `tessera_config.json` shape
+### `ermya_config.json` shape
 
 ```json
 {
   "_warning": "EXAMPLE PROJECT — API keys are stored in plaintext. NOT production-ready. Do not commit this file.",
   "schema_version": 1,
-  "tessera":   { "host": "localhost", "port": 50051, "api_key": "...", "secure": false },
+  "ermya":   { "host": "localhost", "port": 50051, "api_key": "...", "secure": false },
   "embedding": { "provider": "ollama", "endpoint": "http://localhost:11434", "api_key": "", "model": "nomic-embed-text", "deployment_name": "", "dimension": 768 },
   "ingestion": { "tenant_id": "rag-quickstart", "chunk_size": 800, "chunk_overlap": 100, "data_dir": "./data" }
 }
@@ -62,7 +62,7 @@ serves whichever language you run.
 | `ollama`       | none        | `{endpoint}/api/embeddings` (local)   | `model`           |
 
 `embedding.dimension` is the contract for the vector size. The example uses it
-to create the Tessera tenant and **verifies** that the provider actually returns
+to create the Ermya tenant and **verifies** that the provider actually returns
 vectors of that dimension, failing fast with a clear message if they disagree.
 
 ## Per-language instructions

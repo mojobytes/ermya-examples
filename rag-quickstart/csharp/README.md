@@ -1,11 +1,11 @@
-# Tessera RAG Quickstart — C#
+# Ermya RAG Quickstart — C#
 
 > ⚠️ **EXAMPLE / QUICKSTART — keys in plaintext, not production-ready.**
-> This example reads API keys from `tessera_config.json` in plaintext. Do not
+> This example reads API keys from `ermya_config.json` in plaintext. Do not
 > use this approach in production, and do not commit that file (it is ignored).
 
 A minimal RAG pipeline: parse Markdown from `data/` → chunk → embed → insert
-into Tessera → demo search.
+into Ermya → demo search.
 
 ## Setup
 
@@ -15,9 +15,9 @@ dotnet restore
 
 ## Configuration
 
-The example reads `tessera_config.json` by walking **up** from the run directory
-to the repository root (where the Tessera Launchpad writes it). **If the file is
-absent, documented defaults are used** — a local Tessera on `localhost:50051`
+The example reads `ermya_config.json` by walking **up** from the run directory
+to the repository root (where the Ermya Launchpad writes it). **If the file is
+absent, documented defaults are used** — a local Ermya on `localhost:50051`
 and local Ollama embeddings (`nomic-embed-text`, dimension 768) — so the example
 runs standalone.
 
@@ -28,7 +28,7 @@ ollama pull nomic-embed-text
 ollama serve   # serves http://localhost:11434
 ```
 
-To use OpenAI or Azure OpenAI instead, provide a `tessera_config.json` with the
+To use OpenAI or Azure OpenAI instead, provide a `ermya_config.json` with the
 matching `embedding.provider`, `model`/`deployment_name`, `api_key`, and
 `dimension`.
 
@@ -44,9 +44,9 @@ dotnet run --project src/RagQuickstart
 dotnet test
 ```
 
-The tests mock the Tessera client (via the `ITesseraClient` interface and Moq)
+The tests mock the Ermya client (via the `IErmyaClient` interface and Moq)
 and the embedding HTTP calls (via a fake `HttpMessageHandler`), so they run
-without a live Tessera server or network access.
+without a live Ermya server or network access.
 
 ## Layout
 
@@ -58,7 +58,7 @@ without a live Tessera server or network access.
 | `src/RagQuickstart/EmbeddingProvider.cs` | Provider interface + openai/azure/ollama |
 | `src/RagQuickstart/DimensionCheck.cs`    | Verify vector length vs config dimension |
 | `src/RagQuickstart/Endpoint.cs`          | Compose the scheme-prefixed endpoint URL |
-| `src/RagQuickstart/ITesseraClient.cs`    | Example-facing client interface + DTOs |
-| `src/RagQuickstart/TesseraClientAdapter.cs` | Adapter over the real SDK         |
+| `src/RagQuickstart/IErmyaClient.cs`    | Example-facing client interface + DTOs |
+| `src/RagQuickstart/ErmyaClientAdapter.cs` | Adapter over the real SDK         |
 | `src/RagQuickstart/Pipeline.cs`          | Orchestration (injected client + provider) |
 | `src/RagQuickstart/Program.cs`           | Entry point wiring real implementations |

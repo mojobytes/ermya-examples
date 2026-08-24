@@ -1,6 +1,6 @@
 """RAG quickstart entry point.
 
-Reads tessera_config.json (or documented defaults), builds the real Tessera
+Reads ermya_config.json (or documented defaults), builds the real Ermya
 client and embedding provider, and runs the ingest + demo-search pipeline.
 
 Run:
@@ -14,12 +14,12 @@ from pathlib import Path
 from config_loader import load_config
 from embedding import create_provider
 from pipeline import run_pipeline
-from tessera_client_factory import create_client
+from ermya_client_factory import create_client
 
 
 def main() -> None:
     config = load_config()
-    client = create_client(config.tessera)
+    client = create_client(config.ermya)
     provider = create_provider(config.embedding)
 
     data_dir = Path(__file__).parent / config.ingestion.data_dir

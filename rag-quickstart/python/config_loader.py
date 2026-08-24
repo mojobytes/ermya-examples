@@ -1,7 +1,7 @@
-"""Load tessera_config.json by walking up to the repo root, or fall back to
+"""Load ermya_config.json by walking up to the repo root, or fall back to
 documented defaults so the example runs standalone.
 
-The Tessera Launchpad writes tessera_config.json into the repository root when
+The Ermya Launchpad writes ermya_config.json into the repository root when
 it generates this project. Examples live in rag-quickstart/<lang>/, so we search
 upward from the start directory to find it.
 """
@@ -12,12 +12,12 @@ import json
 from dataclasses import dataclass
 from pathlib import Path
 
-CONFIG_FILENAME = "tessera_config.json"
+CONFIG_FILENAME = "ermya_config.json"
 SUPPORTED_SCHEMA_VERSION = 1
 
 
 @dataclass
-class TesseraConfig:
+class ErmyaConfig:
     host: str
     port: int
     api_key: str
@@ -43,16 +43,31 @@ class IngestionConfig:
 
 
 @dataclass
+class VlsUser:
+    username: str
+    password: str
+
+
+@dataclass
+class VlsConfig:
+    issuer: str
+    token_endpoint: str
+    client_id: str
+    users: dict[str, VlsUser]
+
+
+@dataclass
 class Config:
-    tessera: TesseraConfig
+    ermya: ErmyaConfig
     embedding: EmbeddingConfig
     ingestion: IngestionConfig
+    vls: VlsConfig | None = None
 
 
 def _default_config() -> Config:
-    """Documented defaults: local Tessera + local Ollama, no API keys required."""
+    """Documented defaults: local Ermya + local Ollama, no API keys required."""
     return Config(
-        tessera=TesseraConfig(
+        ermya=ErmyaConfig(
             host="localhost", port=50051, api_key="", secure=False
         ),
         embedding=EmbeddingConfig(
@@ -90,11 +105,23 @@ def _parse_config(data: dict) -> Config:
             f"Unsupported schema_version {version!r}; "
             f"this example supports schema_version {SUPPORTED_SCHEMA_VERSION}."
         )
-    t = data["tessera"]
+    t = data["ermya"]
     e = data["embedding"]
     i = data["ingestion"]
+    vls = None
+    vls_raw = data.get("vls")
+    if vls_raw is not None:
+        vls = VlsConfig(
+            issuer=vls_raw["issuer"],
+            token_endpoint=vls_raw["token_endpoint"],
+            client_id=vls_raw["client_id"],
+            users={
+                owner: VlsUser(username=u["username"], password=u["password"])
+                for owner, u in vls_raw["users"].items()
+            },
+        )
     return Config(
-        tessera=TesseraConfig(
+        ermya=ErmyaConfig(
             host=t["host"],
             port=int(t["port"]),
             api_key=t.get("api_key", ""),
@@ -114,6 +141,7 @@ def _parse_config(data: dict) -> Config:
             chunk_overlap=int(i["chunk_overlap"]),
             data_dir=i.get("data_dir", "./data"),
         ),
+        vls=vls,
     )
 
 

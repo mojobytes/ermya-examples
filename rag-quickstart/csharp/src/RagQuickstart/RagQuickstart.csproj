@@ -11,7 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../../../../../tessera-dotnet/src/Tessera.Client/Tessera.Client.csproj" />
+    <ProjectReference Include="../../../../../ermya-dotnet/src/Ermya.Client/Ermya.Client.csproj" />
   </ItemGroup>
 
 </Project>

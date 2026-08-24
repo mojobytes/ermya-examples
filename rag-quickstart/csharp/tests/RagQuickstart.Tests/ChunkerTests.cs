@@ -48,7 +48,7 @@ public class ChunkerTests
     [Fact]
     public async Task ParseMarkdownFiles_ReadsOnlyMd()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "tessera-chunk-" + Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(Path.GetTempPath(), "ermya-chunk-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         await File.WriteAllTextAsync(Path.Combine(dir, "doc1.md"), "# Title\nSome content here.");
         await File.WriteAllTextAsync(Path.Combine(dir, "other.txt"), "ignored");
@@ -60,7 +60,7 @@ public class ChunkerTests
     [Fact]
     public async Task ParseMarkdownFiles_ReturnsSortedDeterministic()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "tessera-chunk-" + Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(Path.GetTempPath(), "ermya-chunk-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         await File.WriteAllTextAsync(Path.Combine(dir, "b.md"), "beta");
         await File.WriteAllTextAsync(Path.Combine(dir, "a.md"), "alpha");
@@ -71,7 +71,7 @@ public class ChunkerTests
     [Fact]
     public async Task ParseMarkdownFiles_ReturnsEmpty_ForEmptyDirectory()
     {
-        var dir = Path.Combine(Path.GetTempPath(), "tessera-empty-" + Guid.NewGuid().ToString("N"));
+        var dir = Path.Combine(Path.GetTempPath(), "ermya-empty-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         (await Chunker.ParseMarkdownFilesAsync(dir)).Should().BeEmpty();
     }

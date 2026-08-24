@@ -2,7 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace RagQuickstart;
 
-public sealed record TesseraConfig(
+public sealed record ErmyaConfig(
     [property: JsonPropertyName("host")] string Host,
     [property: JsonPropertyName("port")] int Port,
     [property: JsonPropertyName("api_key")] string ApiKey,
@@ -24,6 +24,6 @@ public sealed record IngestionConfig(
 
 public sealed record Config(
     [property: JsonPropertyName("schema_version")] int SchemaVersion,
-    [property: JsonPropertyName("tessera")] TesseraConfig Tessera,
+    [property: JsonPropertyName("ermya")] ErmyaConfig Ermya,
     [property: JsonPropertyName("embedding")] EmbeddingConfig Embedding,
     [property: JsonPropertyName("ingestion")] IngestionConfig Ingestion);

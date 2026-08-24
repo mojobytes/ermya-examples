@@ -1,5 +1,5 @@
-# Tessera example config — contains API keys in PLAINTEXT. Never commit.
-tessera_config.json
+# Ermya example config — contains API keys in PLAINTEXT. Never commit.
+ermya_config.json
 
 # Python
 __pycache__/

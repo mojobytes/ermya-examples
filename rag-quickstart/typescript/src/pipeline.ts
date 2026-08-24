@@ -1,8 +1,8 @@
 /**
  * RAG quickstart orchestration: parse -> chunk -> embed -> insert -> search.
  *
- * The Tessera client and embedding provider are injected so the whole flow is
- * unit-testable without a live Tessera or real HTTP. main.ts wires the real
+ * The Ermya client and embedding provider are injected so the whole flow is
+ * unit-testable without a live Ermya or real HTTP. main.ts wires the real
  * implementations from config.
  */
 
@@ -10,7 +10,7 @@ import { chunkText, parseMarkdownFiles } from "./chunker.js";
 import type { Config } from "./config-loader.js";
 import { verifyDimension } from "./dimension-check.js";
 import type { EmbeddingProvider } from "./embedding.js";
-import type { TesseraClientLike } from "./tessera-client-factory.js";
+import type { ErmyaClientLike } from "./ermya-client-factory.js";
 
 const BANNER =
   "=".repeat(64) +
@@ -18,7 +18,7 @@ const BANNER =
   "=".repeat(64);
 
 async function ingestDocuments(
-  client: TesseraClientLike,
+  client: ErmyaClientLike,
   provider: EmbeddingProvider,
   config: Config,
   dataDir: string,
@@ -51,7 +51,7 @@ async function ingestDocuments(
 }
 
 async function demoSearch(
-  client: TesseraClientLike,
+  client: ErmyaClientLike,
   config: Config,
   queryVector: number[],
 ): Promise<void> {
@@ -69,13 +69,13 @@ async function demoSearch(
 
 export async function runPipeline(
   config: Config,
-  client: TesseraClientLike,
+  client: ErmyaClientLike,
   provider: EmbeddingProvider,
   dataDir: string,
 ): Promise<void> {
   console.log(BANNER);
   console.log(
-    `\nTarget Tessera: ${config.tessera.host}:${config.tessera.port} ` +
+    `\nTarget Ermya: ${config.ermya.host}:${config.ermya.port} ` +
       `(tenant '${config.ingestion.tenantId}', dimension ${config.embedding.dimension})`,
   );
   console.log(`Embedding provider: ${config.embedding.provider}\n`);

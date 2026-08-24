@@ -11,7 +11,7 @@ def verify_dimension(vector: list[float], expected: int) -> None:
     if actual != expected:
         raise ValueError(
             f"Dimension mismatch: the embedding provider returned a vector of "
-            f"length {actual}, but tessera_config.json declares "
+            f"length {actual}, but ermya_config.json declares "
             f"embedding.dimension = {expected}. Update embedding.dimension to "
             f"match the model's output size, or pick a matching model."
         )
